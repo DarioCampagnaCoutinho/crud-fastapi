@@ -125,6 +125,16 @@ curl http://localhost:8000
 
 ---
 
+## ✅ Testes
+
+Execute os testes automatizados com:
+
+```powershell
+pytest
+```
+
+---
+
 ## 📁 Estrutura do Projeto
 
 ```
