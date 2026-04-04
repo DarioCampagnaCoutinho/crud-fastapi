@@ -9,6 +9,7 @@ Uma aplicação simples de API REST construída com **FastAPI** e containerizada
 - [Execução](#execução)
 - [Docker](#docker)
 - [Endpoints](#endpoints)
+- [Testes](#-testes)
 - [Estrutura do Projeto](#estrutura-do-projeto)
 
 ---
@@ -127,11 +128,28 @@ curl http://localhost:8000
 
 ## ✅ Testes
 
-Execute os testes automatizados com:
+Os testes estão configurados com `pytest` e descoberta automática via `pytest.ini`.
+
+### Rodar todos os testes
 
 ```powershell
 pytest
 ```
+
+### Rodar apenas os testes do model `Produto`
+
+```powershell
+pytest tests/test_model_produto.py
+```
+
+### Cobertura atual dos testes do model
+
+Arquivo: `tests/test_model_produto.py`
+
+- valida `__tablename__` da classe `Produto`
+- valida tipos das colunas (`id`, `nome`, `descricao`, `preco`, `quantidade`, `criado_em`, `atualizado_em`)
+- valida campos obrigatorios (`nome`, `preco`, `quantidade`) e campo opcional (`descricao`)
+- valida configuracoes de `server_default` (`criado_em`) e `onupdate` (`atualizado_em`)
 
 ---
 
@@ -140,10 +158,15 @@ pytest
 ```
 crud-fastapi/
 ├── app/
-│   └── main.py          # Aplicação FastAPI principal
+│   ├── database.py       # Base declarativa do SQLAlchemy
+│   ├── main.py           # Aplicação FastAPI principal
+│   └── model.py          # Model SQLAlchemy (Produto)
+├── tests/
+│   └── test_model_produto.py  # Testes unitários do model
 ├── .gitignore           # Arquivos ignorados pelo Git
 ├── Dockerfile           # Configuração Docker
 ├── docker-compose.yaml  # Orquestração de containers
+├── pytest.ini           # Configuração do pytest
 ├── requirements.txt     # Dependências Python
 └── README.md            # Este arquivo
 ```
@@ -166,6 +189,9 @@ Imagem Docker baseada em `python:3.11-slim` que:
 Lista de pacotes Python necessários:
 - `fastapi` - Framework web
 - `uvicorn` - Servidor ASGI
+- `SQLAlchemy` - ORM para modelagem de dados
+- `pytest` - Framework de testes
+- `pytest-cov` - Relatório de cobertura de testes
 
 ---
 
