@@ -27,4 +27,4 @@ class ProdutoResponse(ProdutoBase):
     atualizado_em: Optional[datetime] = None
 
     class Config:
-        from_atributes = True2
+        from_attributes = True

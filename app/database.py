@@ -3,7 +3,7 @@ from sqlalchemy.orm import declarative_base, sessionmaker
 from sqlalchemy import create_engine
 
 
-DATABASE_URL = os.getenv("DATABASE_URL", "mysql+pymysql://user:password123@localhost:3306/crud_db")
+DATABASE_URL = os.getenv("DATABASE_URL", "mysql+pymysql://user:user123@localhost:3306/crud_db")
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
@@ -17,4 +17,3 @@ def get_db():
         yield db
     finally:
         db.close()
-
