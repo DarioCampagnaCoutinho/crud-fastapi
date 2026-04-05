@@ -1,10 +1,17 @@
 import os
+import sys
+from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
+
+# Ensure the project root is importable when pytest is invoked from different cwd values.
+ROOT_DIR = Path(__file__).resolve().parents[1]
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
 
 # Ensure app imports do not try to connect to MySQL during tests.
 os.environ["DATABASE_URL"] = "sqlite://"

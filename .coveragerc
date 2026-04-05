@@ -1,0 +1,9 @@
+[run]
+source = app
+relative_files = True
+
+[report]
+omit =
+    tests/*
+    .venv/*
+    .pytest_cache/*

@@ -1,13 +1,11 @@
-version: "3.8"
 services:
-
   db:
     image: mysql:8.0
     environment:
-        MYSQL_ROOT_PASSWORD: root123
-        MYSQL_DATABASE: crud_db
-        MYSQL_USER: user
-        MYSQL_PASSWORD: user123
+      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_DATABASE: crud_db
+      MYSQL_USER: user
+      MYSQL_PASSWORD: user123
     ports:
       - "3306:3306"
     volumes:
@@ -28,5 +26,33 @@ services:
     environment:
       DATABASE_URL: mysql+pymysql://user:user123@db:3306/crud_db
 
+  sonarqube:
+    image: sonarqube:community
+    ports:
+      - "9000:9000"
+    environment:
+      SONAR_ES_BOOTSTRAP_CHECKS_DISABLE: "true"
+    volumes:
+      - sonarqube_data:/opt/sonarqube/data
+      - sonarqube_logs:/opt/sonarqube/logs
+      - sonarqube_extensions:/opt/sonarqube/extensions
+
+  sonar-scanner:
+    image: sonarsource/sonar-scanner-cli:latest
+    depends_on:
+      - sonarqube
+    working_dir: /usr/src
+    environment:
+      SONAR_HOST_URL: ${SONAR_DOCKER_HOST_URL:-http://sonarqube:9000}
+      SONAR_PROJECT_KEY: ${SONAR_PROJECT_KEY:-crud-fastapi}
+      SONAR_TOKEN: ${SONAR_TOKEN:-}
+    volumes:
+      - .:/usr/src
+      - sonar_scanner_cache:/opt/sonar-scanner/.sonar/cache
+
 volumes:
   mysql_data:
+  sonarqube_data:
+  sonarqube_logs:
+  sonarqube_extensions:
+  sonar_scanner_cache:

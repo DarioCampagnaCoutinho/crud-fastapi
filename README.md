@@ -1,30 +1,30 @@
 # CRUD FastAPI
 
-Uma aplicação simples de API REST construída com **FastAPI** e containerizada com **Docker**.
+Uma aplicacao simples de API REST construida com **FastAPI** e containerizada com **Docker**.
 
-## 📋 Índice
+## Indice
 
 - [Requisitos](#requisitos)
-- [Instalação](#instalação)
-- [Execução](#execução)
+- [Instalacao](#instalacao)
+- [Execucao](#execucao)
 - [Docker](#docker)
 - [Endpoints](#endpoints)
-- [Testes](#-testes)
+- [Testes](#testes)
 - [Estrutura do Projeto](#estrutura-do-projeto)
 
 ---
 
-## 📦 Requisitos
+## Requisitos
 
 - Python 3.11+
-- Docker (opcional, para containerização)
+- Docker (opcional, para containerizacao)
 - Docker Compose (opcional)
 
 ---
 
-## 🚀 Instalação
+## Instalacao
 
-### 1. Clone o repositório
+### 1. Clone o repositorio
 
 ```bash
 git clone <seu-repositorio>
@@ -40,16 +40,18 @@ python -m venv venv
 ### 3. Ative o ambiente virtual
 
 **Windows (PowerShell):**
+
 ```powershell
 .\venv\Scripts\Activate.ps1
 ```
 
 **Linux/Mac:**
+
 ```bash
 source venv/bin/activate
 ```
 
-### 4. Instale as dependências
+### 4. Instale as dependencias
 
 ```bash
 pip install -r requirements.txt
@@ -57,7 +59,7 @@ pip install -r requirements.txt
 
 ---
 
-## ▶️ Execução
+## Execucao
 
 ### Localmente (sem Docker)
 
@@ -65,16 +67,16 @@ pip install -r requirements.txt
 uvicorn app.main:app --reload
 ```
 
-A API estará disponível em: `http://localhost:8000`
+A API estara disponivel em: `http://localhost:8000`
 
-### Documentação interativa
+### Documentacao interativa
 
 - **Swagger UI:** `http://localhost:8000/docs`
 - **ReDoc:** `http://localhost:8000/redoc`
 
 ---
 
-## 🐳 Docker
+## Docker
 
 ### Build da imagem
 
@@ -106,29 +108,149 @@ Para parar:
 docker-compose down
 ```
 
+### SonarQube local
+
+O `docker-compose.yaml` inclui um servico `sonarqube` para analise local.
+
+#### 1. Suba o SonarQube
+
+```powershell
+docker compose up -d sonarqube
+```
+
+Acesse:
+
+```text
+http://localhost:9000
+```
+
+Login inicial padrao:
+
+- usuario: `admin`
+- senha: `admin`
+
+#### 2. Gere um token no SonarQube
+
+No SonarQube, gere um token de usuario e use esse valor no arquivo `.env`.
+
+#### 3. Crie o arquivo `.env`
+
+Crie o arquivo `.env` a partir do exemplo:
+
+```powershell
+Copy-Item .env.example .env
+```
+
+Preencha estes valores no `.env`:
+
+```dotenv
+SONAR_HOST_URL=http://localhost:9000
+SONAR_PROJECT_KEY=crud-fastapi
+SONAR_TOKEN=<seu_token>
+```
+
+#### 4. Gere a cobertura antes da analise
+
+O projeto usa o arquivo [`.coveragerc`](C:\Users\dario\PycharmProjects\crud-fastapi\.coveragerc) para gerar `coverage.xml` com caminhos relativos. Isso e importante para o SonarQube conseguir importar a cobertura corretamente.
+
+```powershell
+pytest --cov=app --cov-report=xml
+```
+
+Isso gera o arquivo `coverage.xml` na raiz do projeto.
+
+#### 5. Execute a analise
+
+Opcao 1, usando o scanner em container:
+
+```powershell
+$env:SONAR_DOCKER_HOST_URL="http://sonarqube:9000"
+docker compose run --rm sonar-scanner
+```
+
+Opcao 2, usando `pysonar` localmente, se ele estiver instalado na sua maquina:
+
+```powershell
+pysonar `
+  --sonar-host-url=$env:SONAR_HOST_URL `
+  --sonar-token=$env:SONAR_TOKEN `
+  --sonar-project-key=$env:SONAR_PROJECT_KEY
+```
+
+O `pysonar` local usa `http://localhost:9000`. O scanner em container precisa usar `http://sonarqube:9000`, porque `localhost` dentro do container aponta para ele mesmo.
+
+#### 6. Abra o resultado no dashboard
+
+Depois da execucao bem-sucedida, abra:
+
+```text
+http://localhost:9000/dashboard?id=crud-fastapi
+```
+
+#### Fluxo completo recomendado
+
+```powershell
+docker compose up -d sonarqube
+pytest --cov=app --cov-report=xml
+$env:SONAR_DOCKER_HOST_URL="http://sonarqube:9000"
+docker compose run --rm sonar-scanner
+```
+
+#### Script pronto
+
+O projeto inclui o script [`run-sonar.ps1`](C:\Users\dario\PycharmProjects\crud-fastapi\run-sonar.ps1) para automatizar o processo.
+
+Fluxo padrao, com testes, cobertura e scanner em container:
+
+```powershell
+.\run-sonar.ps1
+```
+
+Pular a geracao da cobertura:
+
+```powershell
+.\run-sonar.ps1 -SkipTests
+```
+
+Usar `pysonar` local em vez do scanner em container:
+
+```powershell
+.\run-sonar.ps1 -UsePysonar
+```
+
+#### Solucao de problemas
+
+- Se o projeto nao aparecer na interface, abra diretamente `http://localhost:9000/dashboard?id=crud-fastapi`.
+- Se a analise subir mas a cobertura nao aparecer, rode novamente `pytest --cov=app --cov-report=xml` antes do scanner.
+- Se o `coverage.xml` tiver caminho absoluto do Windows, o SonarQube ignora a cobertura. O [`.coveragerc`](C:\Users\dario\PycharmProjects\crud-fastapi\.coveragerc) ja foi ajustado para evitar isso.
+- Se `pysonar` nao for reconhecido no terminal, use `docker compose run --rm sonar-scanner`.
+- Se o scanner rodar dentro de container, nao use `http://localhost:9000` como host do Sonar, porque dentro do container `localhost` aponta para o proprio container.
+
 ---
 
-## 🔌 Endpoints
+## Endpoints
 
 ### GET `/`
 
 Retorna uma mensagem simples.
 
 **Resposta:**
+
 ```json
 "Hello World!"
 ```
 
 **Exemplo:**
+
 ```powershell
 curl http://localhost:8000
 ```
 
 ---
 
-## ✅ Testes
+## Testes
 
-Os testes estão configurados com `pytest` e descoberta automática via `pytest.ini`.
+Os testes estao configurados com `pytest` e descoberta automatica via `pytest.ini`.
 
 ### Rodar todos os testes
 
@@ -174,51 +296,54 @@ Arquivo: `tests/conftest.py`
 
 ---
 
-## 📁 Estrutura do Projeto
+## Estrutura do Projeto
 
-```
+```text
 crud-fastapi/
-├── app/
-│   ├── database.py       # Base declarativa do SQLAlchemy
-│   ├── main.py           # Aplicação FastAPI principal
-│   └── model.py          # Model SQLAlchemy (Produto)
-├── tests/
-│   ├── conftest.py                 # Fixtures e override de DB para testes
-│   ├── test_model_produto.py       # Testes unitários do model
-│   └── test_produtos_endpoints.py  # Testes de integração dos endpoints
-├── .gitignore           # Arquivos ignorados pelo Git
-├── Dockerfile           # Configuração Docker
-├── docker-compose.yaml  # Orquestração de containers
-├── pytest.ini           # Configuração do pytest
-├── requirements.txt     # Dependências Python
-└── README.md            # Este arquivo
+|-- app/
+|   |-- database.py       # Base declarativa do SQLAlchemy
+|   |-- main.py           # Aplicacao FastAPI principal
+|   `-- model.py          # Model SQLAlchemy (Produto)
+|-- tests/
+|   |-- conftest.py                 # Fixtures e override de DB para testes
+|   |-- test_model_produto.py       # Testes unitarios do model
+|   `-- test_produtos_endpoints.py  # Testes de integracao dos endpoints
+|-- .gitignore           # Arquivos ignorados pelo Git
+|-- Dockerfile           # Configuracao Docker
+|-- docker-compose.yaml  # Orquestracao de containers
+|-- pytest.ini           # Configuracao do pytest
+|-- requirements.txt     # Dependencias Python
+`-- README.md            # Este arquivo
 ```
 
 ### `app/main.py`
 
-Arquivo principal da aplicação contendo:
-- Instância do FastAPI
+Arquivo principal da aplicacao contendo:
+
+- Instancia do FastAPI
 - Rotas e endpoints
 
 ### `Dockerfile`
 
 Imagem Docker baseada em `python:3.11-slim` que:
-- Instala dependências Python
-- Copia o código da aplicação
-- Inicia o servidor Uvicorn na porta 8000
+
+- instala dependencias Python
+- copia o codigo da aplicacao
+- inicia o servidor Uvicorn na porta 8000
 
 ### `requirements.txt`
 
-Lista de pacotes Python necessários:
+Lista de pacotes Python necessarios:
+
 - `fastapi` - Framework web
 - `uvicorn` - Servidor ASGI
 - `SQLAlchemy` - ORM para modelagem de dados
 - `pytest` - Framework de testes
-- `pytest-cov` - Relatório de cobertura de testes
+- `pytest-cov` - Relatorio de cobertura de testes
 
 ---
 
-## 🛠️ Desenvolvimento
+## Desenvolvimento
 
 ### Adicionar uma nova rota
 
@@ -230,7 +355,7 @@ def get_user(user_id: int):
     return {"user_id": user_id}
 ```
 
-Com `--reload` ativo, a mudança será refletida automaticamente.
+Com `--reload` ativo, a mudanca sera refletida automaticamente.
 
 ### Instalar novos pacotes
 
@@ -239,7 +364,7 @@ pip install <nome-do-pacote>
 pip freeze > requirements.txt
 ```
 
-Depois rebuild a imagem Docker:
+Depois, rebuild a imagem Docker:
 
 ```powershell
 docker build -t crud-fastapi .
@@ -247,20 +372,20 @@ docker build -t crud-fastapi .
 
 ---
 
-## 📝 Notas
+## Notas
 
 - O projeto usa `--reload` no Dockerfile para desenvolvimento
-- Em produção, remova a flag `--reload` do `Dockerfile`
-- Certifique-se de que a porta 8000 está disponível
+- Em producao, remova a flag `--reload` do `Dockerfile`
+- Certifique-se de que a porta 8000 esta disponivel
 
 ---
 
-## 📄 Licença
+## Licenca
 
 MIT
 
 ---
 
-## 🤝 Contribuindo
+## Contribuindo
 
 Sinta-se livre para abrir issues e pull requests!
