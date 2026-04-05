@@ -142,6 +142,12 @@ pytest
 pytest tests/test_model_produto.py
 ```
 
+### Rodar apenas os testes dos endpoints de produtos
+
+```powershell
+pytest tests/test_produtos_endpoints.py
+```
+
 ### Cobertura atual dos testes do model
 
 Arquivo: `tests/test_model_produto.py`
@@ -150,6 +156,21 @@ Arquivo: `tests/test_model_produto.py`
 - valida tipos das colunas (`id`, `nome`, `descricao`, `preco`, `quantidade`, `criado_em`, `atualizado_em`)
 - valida campos obrigatorios (`nome`, `preco`, `quantidade`) e campo opcional (`descricao`)
 - valida configuracoes de `server_default` (`criado_em`) e `onupdate` (`atualizado_em`)
+
+### Cobertura atual dos testes de endpoints
+
+Arquivo: `tests/test_produtos_endpoints.py`
+
+- valida criacao de produto com `POST /produtos` (status `201` e campos retornados)
+- valida listagem de produtos com `GET /produtos` (status `200` e itens persistidos)
+
+### Setup compartilhado de testes
+
+Arquivo: `tests/conftest.py`
+
+- cria banco SQLite em memoria para os testes
+- sobrescreve `get_db` com `app.dependency_overrides` para isolar os testes do MySQL
+- cria e remove tabelas a cada execucao da fixture `client`
 
 ---
 
@@ -162,7 +183,9 @@ crud-fastapi/
 │   ├── main.py           # Aplicação FastAPI principal
 │   └── model.py          # Model SQLAlchemy (Produto)
 ├── tests/
-│   └── test_model_produto.py  # Testes unitários do model
+│   ├── conftest.py                 # Fixtures e override de DB para testes
+│   ├── test_model_produto.py       # Testes unitários do model
+│   └── test_produtos_endpoints.py  # Testes de integração dos endpoints
 ├── .gitignore           # Arquivos ignorados pelo Git
 ├── Dockerfile           # Configuração Docker
 ├── docker-compose.yaml  # Orquestração de containers
@@ -241,4 +264,3 @@ MIT
 ## 🤝 Contribuindo
 
 Sinta-se livre para abrir issues e pull requests!
-
