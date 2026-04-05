@@ -18,8 +18,8 @@ Uma aplicacao simples de API REST construida com **FastAPI** e containerizada co
 ## Requisitos
 
 - Python 3.11+
-- Docker (opcional, para containerizacao)
-- Docker Compose (opcional)
+- MySQL 8.0, se for executar sem Docker
+- Docker e Docker Compose Plugin (opcional, para containerizacao)
 
 ---
 
@@ -35,7 +35,7 @@ cd crud-fastapi
 ### 2. Crie um ambiente virtual
 
 ```powershell
-python -m venv venv
+python -m venv .venv
 ```
 
 ### 3. Ative o ambiente virtual
@@ -43,13 +43,13 @@ python -m venv venv
 **Windows (PowerShell):**
 
 ```powershell
-.\venv\Scripts\Activate.ps1
+.\.venv\Scripts\Activate.ps1
 ```
 
 **Linux/Mac:**
 
 ```bash
-source venv/bin/activate
+source .venv/bin/activate
 ```
 
 ### 4. Instale as dependencias
@@ -63,6 +63,12 @@ pip install -r requirements.txt
 ## Execucao
 
 ### Localmente (sem Docker)
+
+Defina a variavel `DATABASE_URL` para um MySQL em execucao. Exemplo:
+
+```powershell
+$env:DATABASE_URL="mysql+pymysql://user:user123@localhost:3306/crud_db"
+```
 
 ```bash
 uvicorn app.main:app --reload
@@ -88,7 +94,9 @@ docker build -t crud-fastapi .
 ### Rodar o container
 
 ```powershell
-docker run -p 8000:8000 crud-fastapi
+docker run -p 8000:8000 `
+  -e DATABASE_URL="mysql+pymysql://user:user123@host.docker.internal:3306/crud_db" `
+  crud-fastapi
 ```
 
 ### Rodar com volume (desenvolvimento)
@@ -97,16 +105,18 @@ docker run -p 8000:8000 crud-fastapi
 docker run -p 8000:8000 -v "C:\Users\dario\PycharmProjects\crud-fastapi\app:/app/app" crud-fastapi
 ```
 
+Observacao: esse modo tambem precisa de `DATABASE_URL` apontando para um MySQL acessivel pelo container.
+
 ### Usar Docker Compose
 
 ```powershell
-docker-compose up
+docker compose up
 ```
 
 Para parar:
 
 ```powershell
-docker-compose down
+docker compose down
 ```
 
 ### SonarQube local
@@ -312,6 +322,63 @@ Retorna uma mensagem simples.
 curl http://localhost:8000
 ```
 
+### GET `/health`
+
+Retorna o status basico da aplicacao.
+
+**Resposta:**
+
+```json
+{
+  "status": "Ok"
+}
+```
+
+### POST `/produtos`
+
+Cria um novo produto.
+
+**Exemplo de payload:**
+
+```json
+{
+  "nome": "Teclado Mecanico",
+  "descricao": "Switch blue",
+  "preco": 299.9,
+  "quantidade": 10
+}
+```
+
+### GET `/produtos`
+
+Lista os produtos cadastrados.
+
+Parametros opcionais:
+
+- `skip`: deslocamento inicial da consulta
+- `limit`: quantidade maxima de itens retornados
+
+### PUT `/produtos/{produto_id}`
+
+Atualiza parcialmente um produto existente.
+
+**Exemplo de payload:**
+
+```json
+{
+  "preco": 4299.9,
+  "quantidade": 4
+}
+```
+
+Se o produto nao existir, retorna `404`.
+
+### DELETE `/produtos/{produto_id}`
+
+Remove um produto existente.
+
+Se o produto nao existir, retorna `404`.
+
 ---
 
 ## Testes
@@ -351,6 +418,10 @@ Arquivo: `tests/test_produtos_endpoints.py`
 
 - valida criacao de produto com `POST /produtos` (status `201` e campos retornados)
 - valida listagem de produtos com `GET /produtos` (status `200` e itens persistidos)
+- valida atualizacao de produto com `PUT /produtos/{id}` (status `200`)
+- valida erro ao atualizar produto inexistente (status `404`)
+- valida exclusao de produto com `DELETE /produtos/{id}` (status `204`)
+- valida erro ao excluir produto inexistente (status `404`)
 
 ### Setup compartilhado de testes
 
@@ -367,19 +438,33 @@ Arquivo: `tests/conftest.py`
 ```text
 crud-fastapi/
 |-- app/
-|   |-- database.py       # Base declarativa do SQLAlchemy
-|   |-- main.py           # Aplicacao FastAPI principal
-|   `-- model.py          # Model SQLAlchemy (Produto)
+|   |-- database.py       # Configuracao do banco e sessao SQLAlchemy
+|   |-- main.py           # Aplicacao FastAPI principal e endpoints
+|   |-- model.py          # Model SQLAlchemy (Produto)
+|   `-- schemas.py        # Schemas Pydantic de entrada e saida
+|-- monitoring/
+|   |-- grafana/
+|   |   `-- provisioning/
+|   |       `-- datasources/
+|   |           `-- datasources.yml  # Datasources provisionadas no Grafana
+|   |-- loki/
+|   |   `-- loki-config.yml          # Configuracao do Loki
+|   |-- prometheus/
+|   |   `-- prometheus.yml           # Configuracao do Prometheus
+|   `-- promtail/
+|       `-- promtail-config.yml      # Configuracao do Promtail
 |-- tests/
 |   |-- conftest.py                 # Fixtures e override de DB para testes
 |   |-- test_model_produto.py       # Testes unitarios do model
 |   `-- test_produtos_endpoints.py  # Testes de integracao dos endpoints
+|-- .env.example         # Exemplo de variaveis de ambiente
 |-- .gitignore           # Arquivos ignorados pelo Git
 |-- Dockerfile           # Configuracao Docker
 |-- docker-compose.yaml  # Orquestracao de containers
-|-- monitoring/          # Configuracoes de Grafana, Prometheus, Loki e Promtail
 |-- pytest.ini           # Configuracao do pytest
 |-- requirements.txt     # Dependencias Python
+|-- run-sonar.ps1        # Script auxiliar para analise no SonarQube
+|-- sonar-project.properties  # Configuracao do projeto Sonar
 `-- README.md            # Este arquivo
 ```
 
@@ -388,7 +473,24 @@ crud-fastapi/
 Arquivo principal da aplicacao contendo:
 
 - Instancia do FastAPI
-- Rotas e endpoints
+- Rotas `GET /`, `GET /health`, `POST /produtos`, `GET /produtos`, `PUT /produtos/{id}` e `DELETE /produtos/{id}`
+
+### `app/database.py`
+
+Contem:
+
+- leitura da variavel de ambiente `DATABASE_URL`
+- criacao do `engine` SQLAlchemy
+- fabrica de sessoes `SessionLocal`
+- dependencia `get_db`
+
+### `app/schemas.py`
+
+Define os schemas Pydantic:
+
+- `ProdutoCreate`
+- `ProdutoUpdate`
+- `ProdutoResponse`
 
 ### `Dockerfile`
 
@@ -397,6 +499,7 @@ Imagem Docker baseada em `python:3.11-slim` que:
 - instala dependencias Python
 - copia o codigo da aplicacao
 - inicia o servidor Uvicorn na porta 8000
+- usa `--reload`, o que favorece desenvolvimento, nao producao
 
 ### `requirements.txt`
 
@@ -405,6 +508,8 @@ Lista de pacotes Python necessarios:
 - `fastapi` - Framework web
 - `uvicorn` - Servidor ASGI
 - `SQLAlchemy` - ORM para modelagem de dados
+- `PyMySQL` - Driver MySQL usado pela aplicacao
+- `pydantic` - Validacao e serializacao dos schemas
 - `pytest` - Framework de testes
 - `pytest-cov` - Relatorio de cobertura de testes
 
@@ -441,9 +546,11 @@ docker build -t crud-fastapi .
 
 ## Notas
 
+- A aplicacao cria as tabelas automaticamente ao iniciar via `Base.metadata.create_all(bind=engine)`
 - O projeto usa `--reload` no Dockerfile para desenvolvimento
 - Em producao, remova a flag `--reload` do `Dockerfile`
-- Certifique-se de que a porta 8000 esta disponivel
+- A execucao local sem Docker depende de um MySQL acessivel pela `DATABASE_URL`
+- Certifique-se de que as portas `8000`, `3000`, `3100`, `9090` e `9000` estejam disponiveis quando usar o stack completo
 
 ---
 
