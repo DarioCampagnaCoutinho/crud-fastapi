@@ -8,6 +8,7 @@ Uma aplicacao simples de API REST construida com **FastAPI** e containerizada co
 - [Instalacao](#instalacao)
 - [Execucao](#execucao)
 - [Docker](#docker)
+- [Observabilidade](#observabilidade)
 - [Endpoints](#endpoints)
 - [Testes](#testes)
 - [Estrutura do Projeto](#estrutura-do-projeto)
@@ -228,6 +229,71 @@ Usar `pysonar` local em vez do scanner em container:
 
 ---
 
+## Observabilidade
+
+O projeto agora inclui um stack basico de observabilidade com:
+
+- `Grafana` para dashboards
+- `Prometheus` para metricas
+- `Loki` para armazenamento e consulta de logs
+- `Promtail` para coleta de logs dos containers Docker
+
+### Subir o stack
+
+```powershell
+docker compose up -d grafana prometheus loki promtail
+```
+
+### URLs
+
+- Grafana: `http://localhost:3000`
+- Prometheus: `http://localhost:9090`
+- Loki API: `http://localhost:3100/loki/api/v1/status/buildinfo`
+- Loki healthcheck: `http://localhost:3100/ready`
+
+Observacao: acessar `http://localhost:3100/` diretamente retorna `404 not found` e isso e esperado. O Loki nao expoe uma UI na raiz; use o Grafana para explorar logs ou os endpoints acima para validar o servico.
+
+### Credenciais padrao do Grafana
+
+- usuario: `admin`
+- senha: `admin`
+
+Voce pode sobrescrever essas credenciais com as variaveis `GRAFANA_ADMIN_USER` e `GRAFANA_ADMIN_PASSWORD`.
+
+### Como os logs chegam ao Grafana
+
+- O `promtail` descobre os containers via Docker socket
+- Os logs `stdout` e `stderr` dos containers sao enviados ao `loki`
+- O `grafana` ja sobe com `Prometheus` e `Loki` provisionados como datasources
+
+### Ver logs no Grafana
+
+1. Abra `http://localhost:3000`
+2. Va em `Explore`
+3. Selecione a datasource `Loki`
+4. Consulte, por exemplo:
+
+```text
+{compose_project="crud-fastapi"}
+```
+
+Ou filtre por servico:
+
+```text
+{compose_service="api"}
+```
+
+### Observacao sobre metricas
+
+O `Prometheus` ja esta pronto no Compose, mas a API FastAPI ainda nao expoe um endpoint `/metrics`. Portanto:
+
+- logs no Grafana/Loki ja ficam disponiveis com esse stack
+- metricas detalhadas da aplicacao ainda exigem instrumentacao da API
+
+Se quiser, o proximo passo natural e adicionar metricas da FastAPI para o `Prometheus`.
+
+---
+
 ## Endpoints
 
 ### GET `/`
@@ -311,6 +377,7 @@ crud-fastapi/
 |-- .gitignore           # Arquivos ignorados pelo Git
 |-- Dockerfile           # Configuracao Docker
 |-- docker-compose.yaml  # Orquestracao de containers
+|-- monitoring/          # Configuracoes de Grafana, Prometheus, Loki e Promtail
 |-- pytest.ini           # Configuracao do pytest
 |-- requirements.txt     # Dependencias Python
 `-- README.md            # Este arquivo
