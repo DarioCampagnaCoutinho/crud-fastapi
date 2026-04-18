@@ -1,0 +1,23 @@
+curl --location 'http://localhost:8000/'
+
+curl --location 'http://localhost:8000/health'
+
+curl --location 'http://localhost:8000/produtos' \
+--header 'Content-Type: application/json' \
+--data '{
+  "nome": "Teclado Mecanico",
+  "descricao": "Switch blue",
+  "preco": 299.9,
+  "quantidade": 10
+}'
+
+curl --location 'http://localhost:8000/produtos?skip=0&limit=100'
+
+curl --location --request PUT 'http://localhost:8000/produtos/1' \
+--header 'Content-Type: application/json' \
+--data '{
+  "preco": 4299.9,
+  "quantidade": 4
+}'
+
+curl --location --request DELETE 'http://localhost:8000/produtos/1'

@@ -1,0 +1,158 @@
+{
+  "info": {
+    "_postman_id": "3d639f80-7c91-4d4c-98b9-d9ff8cb9b882",
+    "name": "CRUD FastAPI",
+    "description": "Collection gerada a partir das rotas em app/main.py.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Root",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            ""
+          ]
+        },
+        "description": "GET /"
+      },
+      "response": []
+    },
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/health",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "health"
+          ]
+        },
+        "description": "GET /health"
+      },
+      "response": []
+    },
+    {
+      "name": "Criar Produto",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"nome\": \"Teclado Mecanico\",\n  \"descricao\": \"Switch blue\",\n  \"preco\": 299.9,\n  \"quantidade\": 10\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/produtos",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "produtos"
+          ]
+        },
+        "description": "POST /produtos"
+      },
+      "response": []
+    },
+    {
+      "name": "Listar Produtos",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/produtos?skip=0&limit=100",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "produtos"
+          ],
+          "query": [
+            {
+              "key": "skip",
+              "value": "0"
+            },
+            {
+              "key": "limit",
+              "value": "100"
+            }
+          ]
+        },
+        "description": "GET /produtos"
+      },
+      "response": []
+    },
+    {
+      "name": "Atualizar Produto",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"preco\": 4299.9,\n  \"quantidade\": 4\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/produtos/{{produto_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "produtos",
+            "{{produto_id}}"
+          ]
+        },
+        "description": "PUT /produtos/{produto_id}"
+      },
+      "response": []
+    },
+    {
+      "name": "Deletar Produto",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/produtos/{{produto_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "produtos",
+            "{{produto_id}}"
+          ]
+        },
+        "description": "DELETE /produtos/{produto_id}"
+      },
+      "response": []
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000"
+    },
+    {
+      "key": "produto_id",
+      "value": "1"
+    }
+  ]
+}
